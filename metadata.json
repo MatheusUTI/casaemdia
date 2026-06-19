@@ -1,0 +1,7 @@
+{
+  "name": "Casa em Dia",
+  "description": "Gerencie prazos, manutenções e documentos da sua casa e carro em um só lugar.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
+
