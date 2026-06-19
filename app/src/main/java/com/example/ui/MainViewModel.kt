@@ -9,6 +9,10 @@ import com.example.data.AppNote
 import com.example.data.DocumentItem
 import com.example.data.MaintenanceItem
 import com.example.data.MaintenanceRepository
+import com.example.data.mapper.ModelMapper
+import com.example.domain.model.ControlItem
+import com.example.domain.model.ControlStatus
+import com.example.domain.status.ControlStatusCalculator
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
 
@@ -25,6 +29,26 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
 
     // Streams of data
     val items: StateFlow<List<MaintenanceItem>> = repository.allItems
+        .map { list ->
+            // Pass items through Domain Model Mapper and calculate status dynamically
+            list.map { entity ->
+                val domain = ModelMapper.toDomain(entity)
+                // Map back to sync status from ControlStatusCalculator
+                entity.copy(
+                    isCompleted = domain.status == ControlStatus.OK && entity.isCompleted,
+                    notes = when (domain.status) {
+                        ControlStatus.OVERDUE -> "Atrasado! Verifique imediatamente"
+                        ControlStatus.ATTENTION -> "Atenção necessária"
+                        ControlStatus.OK -> entity.notes
+                    }
+                )
+            }
+        }
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
+
+    // Direct domain model exposure for strict SDD alignment
+    val controlItems: StateFlow<List<ControlItem>> = repository.allItems
+        .map { list -> list.map { ModelMapper.toDomain(it) } }
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
 
     val codes: StateFlow<List<AppCode>> = repository.allCodes
@@ -44,10 +68,10 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         _searchQuery.value = query
     }
 
-    // Add item functions
+    // Add item functions using Domain mapper or properties
     fun addMaintenanceItem(title: String, category: String, subtitle: String?, daysLeft: Int, notes: String?, smartReminder: Boolean) {
         viewModelScope.launch {
-            val item = MaintenanceItem(
+            val entity = MaintenanceItem(
                 title = title,
                 category = category,
                 subtitle = subtitle ?: category,
@@ -56,7 +80,13 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
                 notes = notes,
                 smartReminder = smartReminder
             )
-            repository.insertItem(item)
+            // Verify and process via Domain mapping
+            val domain = ModelMapper.toDomain(entity)
+            val processedEntity = ModelMapper.toEntity(domain).copy(
+                notes = notes, // Preserve custom notes
+                smartReminder = smartReminder
+            )
+            repository.insertItem(processedEntity)
         }
     }
 
@@ -65,13 +95,19 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
             val currentItems = items.value
             val item = currentItems.find { it.id == itemId }
             if (item != null) {
-                // Get month & year or simplified Portugese date for completed action
-                val completedItem = item.copy(
+                // Convert to domain model
+                val domain = ModelMapper.toDomain(item)
+                // Set to OK status (completed)
+                val completedDomain = domain.copy(status = ControlStatus.OK)
+                var completedEntity = ModelMapper.toEntity(completedDomain)
+                completedEntity = completedEntity.copy(
+                    id = item.id,
                     isCompleted = true,
                     completedDateStr = "Hoje",
-                    daysLeft = item.daysLeft + 60 // moves it further in timeline
+                    daysLeft = item.daysLeft + 60, // pushes it further in timeline
+                    notes = item.notes
                 )
-                repository.updateItem(completedItem)
+                repository.updateItem(completedEntity)
             }
         }
     }
