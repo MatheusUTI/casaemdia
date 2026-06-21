@@ -8,6 +8,7 @@ import com.example.data.AppCode
 import com.example.data.AppNote
 import com.example.data.DocumentItem
 import com.example.data.MaintenanceItem
+import com.example.data.HistoryEntryEntity
 import com.example.data.MaintenanceRepository
 import com.example.data.mapper.ModelMapper
 import com.example.domain.model.ControlItem
@@ -23,7 +24,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         val database = AppDatabase.getDatabase(application)
         repository = MaintenanceRepository(database.maintenanceDao())
         viewModelScope.launch {
-            repository.prepopulateIfEmpty()
+            repository.prepopulateIfEmpty(application)
         }
     }
 
@@ -60,6 +61,9 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     val documents: StateFlow<List<DocumentItem>> = repository.allDocuments
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
 
+    val historyEntries: StateFlow<List<HistoryEntryEntity>> = repository.allHistoryEntries
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
+
     // Search query for Archive tab
     private val _searchQuery = MutableStateFlow("")
     val searchQuery = _searchQuery.asStateFlow()
@@ -69,7 +73,16 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     }
 
     // Add item functions using Domain mapper or properties
-    fun addMaintenanceItem(title: String, category: String, subtitle: String?, daysLeft: Int, notes: String?, smartReminder: Boolean) {
+    fun addMaintenanceItem(
+        title: String,
+        category: String,
+        subtitle: String?,
+        daysLeft: Int,
+        notes: String?,
+        smartReminder: Boolean,
+        recurrence: String = "Nenhuma",
+        alertDaysBefore: Int = 0
+    ) {
         viewModelScope.launch {
             val entity = MaintenanceItem(
                 title = title,
@@ -78,37 +91,83 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
                 daysLeft = daysLeft,
                 isCompleted = false,
                 notes = notes,
-                smartReminder = smartReminder
+                smartReminder = smartReminder,
+                recurrence = recurrence,
+                alertDaysBefore = alertDaysBefore
             )
             // Verify and process via Domain mapping
             val domain = ModelMapper.toDomain(entity)
-            val processedEntity = ModelMapper.toEntity(domain).copy(
+            val processedEntity = ModelMapper.toEntity(domain, isCompleted = false).copy(
                 notes = notes, // Preserve custom notes
-                smartReminder = smartReminder
+                smartReminder = smartReminder,
+                recurrence = recurrence,
+                alertDaysBefore = alertDaysBefore
             )
-            repository.insertItem(processedEntity)
+            val insertedId = repository.insertItem(processedEntity)
+            val finalEntity = processedEntity.copy(id = insertedId.toInt())
+            com.example.data.NotificationScheduler.scheduleNotification(getApplication(), finalEntity)
+        }
+    }
+
+    fun updateMaintenanceItem(
+        id: Int,
+        title: String,
+        category: String,
+        subtitle: String?,
+        daysLeft: Int,
+        notes: String?,
+        smartReminder: Boolean,
+        recurrence: String = "Nenhuma",
+        alertDaysBefore: Int = 0
+    ) {
+        viewModelScope.launch {
+            val existing = repository.getItemById(id)
+            if (existing != null) {
+                val updated = existing.copy(
+                    title = title,
+                    category = category,
+                    subtitle = subtitle ?: category,
+                    daysLeft = daysLeft,
+                    notes = notes,
+                    smartReminder = smartReminder,
+                    recurrence = recurrence,
+                    alertDaysBefore = alertDaysBefore
+                )
+                repository.updateItem(updated)
+                com.example.data.NotificationScheduler.scheduleNotification(getApplication(), updated)
+            }
+        }
+    }
+
+    fun deleteMaintenanceItem(id: Int) {
+        viewModelScope.launch {
+            val existing = repository.getItemById(id)
+            if (existing != null) {
+                repository.deleteItem(existing)
+                com.example.data.NotificationScheduler.cancelNotification(getApplication(), id)
+            }
         }
     }
 
     fun completeItem(itemId: Int) {
+        completeControlItem(itemId)
+    }
+
+    fun completeControlItem(itemId: Int) {
         viewModelScope.launch {
-            val currentItems = items.value
-            val item = currentItems.find { it.id == itemId }
-            if (item != null) {
-                // Convert to domain model
-                val domain = ModelMapper.toDomain(item)
-                // Set to OK status (completed)
-                val completedDomain = domain.copy(status = ControlStatus.OK)
-                var completedEntity = ModelMapper.toEntity(completedDomain)
-                completedEntity = completedEntity.copy(
-                    id = item.id,
-                    isCompleted = true,
-                    completedDateStr = "Hoje",
-                    daysLeft = item.daysLeft + 60, // pushes it further in timeline
-                    notes = item.notes
-                )
-                repository.updateItem(completedEntity)
-            }
+            repository.completeControlItem(itemId, getApplication())
+        }
+    }
+
+    fun restoreHistoryEntry(historyId: Int) {
+        viewModelScope.launch {
+            repository.restoreHistoryEntry(historyId)
+        }
+    }
+
+    fun deleteHistoryEntry(historyId: Int) {
+        viewModelScope.launch {
+            repository.deleteHistoryEntryById(historyId)
         }
     }
 

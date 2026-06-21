@@ -31,17 +31,17 @@ fun ArchiveTimelineScreen(
     onInicioClick: () -> Unit,
     onModulesClick: () -> Unit,
     onSearchClick: () -> Unit, // leads to bento search file explorer
-    onSettingsClick: () -> Unit
+    onSettingsClick: () -> Unit,
+    onHistoryClick: (Int) -> Unit
 ) {
-    val items by viewModel.items.collectAsState()
+    val completedHistory by viewModel.historyEntries.collectAsState()
     var selectedFilter by remember { mutableStateOf("Todos") }
 
-    val completedItems = items.filter { it.isCompleted }
     val filteredHistory = when (selectedFilter) {
-        "Casa" -> completedItems.filter { it.category == "CASA" }
-        "Carro" -> completedItems.filter { it.category == "CARRO" }
-        "Jardim" -> completedItems.filter { it.subtitle?.lowercase()?.contains("jardim") == true }
-        else -> completedItems
+        "Casa" -> completedHistory.filter { it.category == "CASA" }
+        "Carro" -> completedHistory.filter { it.category == "CARRO" }
+        "Jardim" -> completedHistory.filter { it.subtitle?.lowercase()?.contains("jardim") == true }
+        else -> completedHistory
     }
 
     Scaffold(
@@ -223,7 +223,10 @@ fun ArchiveTimelineScreen(
 
                                 // Timeline card
                                 Card(
-                                    modifier = Modifier.weight(1f),
+                                    modifier = Modifier
+                                        .weight(1f)
+                                        .testTag("history_item_card_${item.id}")
+                                        .clickable { onHistoryClick(item.id) },
                                     shape = RoundedCornerShape(12.dp),
                                     colors = CardDefaults.cardColors(containerColor = SurfaceContainerLowest),
                                     border = BorderStroke(1.dp, OutlineVariant.copy(alpha = 0.4f))

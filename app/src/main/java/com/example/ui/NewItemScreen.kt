@@ -1,6 +1,10 @@
 package com.example.ui
 
+import android.widget.Toast
 import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.background
+import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -12,29 +16,85 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.example.ui.theme.*
+import java.time.LocalDate
+import java.time.Instant
+import java.time.ZoneId
+import java.time.format.DateTimeFormatter
+import java.time.temporal.ChronoUnit
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun NewItemScreen(
     viewModel: MainViewModel,
+    itemId: Int? = null,
     onCloseClick: () -> Unit,
     onSaveSuccess: () -> Unit
 ) {
+    val items by viewModel.items.collectAsState()
+    val itemToEdit = remember(items, itemId) { items.find { it.id == itemId } }
+    val context = LocalContext.current
+
     var title by remember { mutableStateOf("") }
     var category by remember { mutableStateOf("CASA") } // default CASA
     var notes by remember { mutableStateOf("") }
     var smartReminder by remember { mutableStateOf(true) }
+    var selectedDate by remember { mutableStateOf<LocalDate?>(null) }
+    var showDatePicker by remember { mutableStateOf(false) }
+    val datePickerState = rememberDatePickerState()
+    var recurrence by remember { mutableStateOf("Nenhuma") }
+    var alertDaysBefore by remember { mutableStateOf(0) }
+
+    LaunchedEffect(itemToEdit) {
+        if (itemToEdit != null) {
+            title = itemToEdit.title
+            category = itemToEdit.category
+            notes = itemToEdit.notes ?: ""
+            smartReminder = itemToEdit.smartReminder
+            selectedDate = LocalDate.now().plusDays(itemToEdit.daysLeft.toLong())
+            recurrence = itemToEdit.recurrence
+            alertDaysBefore = itemToEdit.alertDaysBefore
+        }
+    }
+
+    if (showDatePicker) {
+        DatePickerDialog(
+            onDismissRequest = { showDatePicker = false },
+            confirmButton = {
+                TextButton(
+                    onClick = {
+                        val selectedMillis = datePickerState.selectedDateMillis
+                        if (selectedMillis != null) {
+                            selectedDate = Instant.ofEpochMilli(selectedMillis)
+                                .atZone(ZoneId.of("UTC"))
+                                .toLocalDate()
+                        }
+                        showDatePicker = false
+                    }
+                ) {
+                    Text("Confirmar")
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { showDatePicker = false }) {
+                    Text("Cancelar")
+                }
+            }
+        ) {
+            DatePicker(state = datePickerState)
+        }
+    }
 
     Scaffold(
         topBar = {
             TopAppBar(
                 title = {
                     Text(
-                        text = "Novo Item",
+                        text = if (itemId != null) "Editar Item" else "Novo Item",
                         style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold, color = Primary)
                     )
                 },
@@ -139,8 +199,16 @@ fun NewItemScreen(
                 Spacer(modifier = Modifier.height(24.dp))
 
                 // Picker simulator
+                val dateText = if (selectedDate != null) {
+                    selectedDate!!.format(DateTimeFormatter.ofPattern("dd/MM/yyyy"))
+                } else {
+                    "Opcional (hoje por padrão)"
+                }
                 Card(
-                     modifier = Modifier.fillMaxWidth(),
+                     modifier = Modifier
+                         .fillMaxWidth()
+                         .clickable { showDatePicker = true }
+                         .testTag("select_date_card"),
                      shape = RoundedCornerShape(12.dp),
                      colors = CardDefaults.cardColors(containerColor = SurfaceContainerLowest),
                      border = BorderStroke(1.dp, OutlineVariant.copy(alpha = 0.4f))
@@ -161,7 +229,7 @@ fun NewItemScreen(
                                     style = MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.Bold, color = Primary)
                                 )
                                 Text(
-                                    "Opcional (hoje por padrão)",
+                                    dateText,
                                     style = MaterialTheme.typography.bodySmall.copy(color = Outline)
                                 )
                             }
@@ -169,6 +237,22 @@ fun NewItemScreen(
                         Icon(Icons.Default.ChevronRight, contentDescription = "Selecionar", tint = Outline)
                     }
                 }
+
+                Spacer(modifier = Modifier.height(16.dp))
+
+                // Recorrência
+                RecurrenceSelector(
+                    selectedRecurrence = recurrence,
+                    onRecurrenceSelected = { recurrence = it }
+                )
+
+                Spacer(modifier = Modifier.height(16.dp))
+
+                // Alerta Antecipado
+                AlertDaysSelector(
+                    selectedDaysBefore = alertDaysBefore,
+                    onDaysBeforeSelected = { alertDaysBefore = it }
+                )
 
                 Spacer(modifier = Modifier.height(16.dp))
 
@@ -218,14 +302,37 @@ fun NewItemScreen(
             Button(
                 onClick = {
                     if (title.isNotBlank()) {
-                        viewModel.addMaintenanceItem(
-                            title = title,
-                            category = category,
-                            subtitle = if (category == "CARRO") "CARRO" else "CASA",
-                            daysLeft = (0..20).random(), // puts it under standard today/7day or 30day lists
-                            notes = notes,
-                            smartReminder = smartReminder
-                        )
+                        val days = if (selectedDate != null) {
+                            ChronoUnit.DAYS.between(LocalDate.now(), selectedDate).toInt()
+                        } else {
+                            0
+                        }
+                        if (itemId != null) {
+                            viewModel.updateMaintenanceItem(
+                                id = itemId,
+                                title = title,
+                                category = category,
+                                subtitle = if (category == "CARRO") "CARRO" else "CASA",
+                                daysLeft = days,
+                                notes = notes,
+                                smartReminder = smartReminder,
+                                recurrence = recurrence,
+                                alertDaysBefore = alertDaysBefore
+                            )
+                            Toast.makeText(context, "Lembrete editado com sucesso!", Toast.LENGTH_SHORT).show()
+                        } else {
+                            viewModel.addMaintenanceItem(
+                                title = title,
+                                category = category,
+                                subtitle = if (category == "CARRO") "CARRO" else "CASA",
+                                daysLeft = days,
+                                notes = notes,
+                                smartReminder = smartReminder,
+                                recurrence = recurrence,
+                                alertDaysBefore = alertDaysBefore
+                            )
+                            Toast.makeText(context, "Lembrete salvo com sucesso!", Toast.LENGTH_SHORT).show()
+                        }
                         onSaveSuccess()
                     }
                 },
@@ -241,7 +348,7 @@ fun NewItemScreen(
                     Icon(Icons.Default.CheckCircle, contentDescription = "Check", tint = Color.White)
                     Spacer(modifier = Modifier.width(8.dp))
                     Text(
-                        text = "Salvar Item",
+                        text = if (itemId != null) "Atualizar Item" else "Salvar Item",
                         style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold, color = Color.White)
                     )
                 }

@@ -30,7 +30,8 @@ fun HomeScreen(
     onAddClick: () -> Unit,
     onSettingsClick: () -> Unit,
     onVehicleDetailClick: () -> Unit,
-    onHouseDetailClick: () -> Unit
+    onHouseDetailClick: () -> Unit,
+    onItemClick: (Int) -> Unit
 ) {
     val items by viewModel.items.collectAsState()
 
@@ -133,7 +134,7 @@ fun HomeScreen(
                     OverdueTaskCard(
                         item = item,
                         onClick = {
-                            if (item.category == "CARRO") onVehicleDetailClick() else onHouseDetailClick()
+                            onItemClick(item.id)
                         },
                         onResolve = { viewModel.completeItem(item.id) }
                     )
@@ -152,7 +153,7 @@ fun HomeScreen(
                         accentColor = Color(0xFFFEF3C7),
                         tagColor = Color(0xFFD97706),
                         onClick = {
-                            if (item.category == "CARRO") onVehicleDetailClick() else onHouseDetailClick()
+                            onItemClick(item.id)
                         }
                     )
                     Spacer(modifier = Modifier.height(12.dp))
@@ -174,7 +175,7 @@ fun HomeScreen(
                             GridTaskCard(
                                 item = item,
                                 onClick = {
-                                    if (item.category == "CARRO") onVehicleDetailClick() else onHouseDetailClick()
+                                    onItemClick(item.id)
                                 }
                             )
                         }
@@ -194,7 +195,7 @@ fun HomeScreen(
                         accentColor = SurfaceContainerLow,
                         tagColor = Primary,
                         onClick = {
-                            if (item.category == "CARRO") onVehicleDetailClick() else onHouseDetailClick()
+                            onItemClick(item.id)
                         }
                     )
                     Spacer(modifier = Modifier.height(12.dp))

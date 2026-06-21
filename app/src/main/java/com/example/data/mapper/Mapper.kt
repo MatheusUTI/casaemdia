@@ -72,7 +72,7 @@ object ModelMapper {
     /**
      * Map Domain ControlItem back to Room MaintenanceItem
      */
-    fun toEntity(domain: ControlItem): MaintenanceItem {
+    fun toEntity(domain: ControlItem, isCompleted: Boolean = false): MaintenanceItem {
         val category = when (domain.assetId) {
             "1" -> "CARRO"
             "2" -> "CASA"
@@ -91,8 +91,8 @@ object ModelMapper {
             category = category,
             subtitle = if (category == "CARRO") "CARRO" else "CASA",
             daysLeft = daysLeft,
-            isCompleted = domain.status == ControlStatus.OK,
-            completedDateStr = if (domain.status == ControlStatus.OK) "Hoje" else null,
+            isCompleted = isCompleted,
+            completedDateStr = if (isCompleted) "Hoje" else null,
             cost = null,
             notes = domain.notes,
             detailValue = null,
