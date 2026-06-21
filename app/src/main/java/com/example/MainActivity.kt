@@ -48,7 +48,7 @@ class MainActivity : ComponentActivity() {
                                 onModulesClick = { navController.navigate("modules") },
                                 onArchiveClick = { navController.navigate("archive_timeline") },
                                 onAddClick = { navController.navigate("new_item") },
-                                onSettingsClick = { /* Settings action - no-op */ },
+                                onSettingsClick = { navController.navigate("settings") },
                                 onVehicleDetailClick = { navController.navigate("vehicle_detail") },
                                 onHouseDetailClick = { navController.navigate("house_detail") },
                                 onItemClick = { itemId -> navController.navigate("item_detail/$itemId") }
@@ -60,7 +60,7 @@ class MainActivity : ComponentActivity() {
                                 onArchiveClick = { navController.navigate("archive_timeline") },
                                 onVehicleClick = { navController.navigate("vehicle_detail") },
                                 onHouseClick = { navController.navigate("house_detail") },
-                                onSettingsClick = { /* Settings action */ }
+                                onSettingsClick = { navController.navigate("settings") }
                             )
                         }
                         composable("vehicle_detail") {
@@ -112,7 +112,7 @@ class MainActivity : ComponentActivity() {
                                 onInicioClick = { navController.navigate("home") },
                                 onModulesClick = { navController.navigate("modules") },
                                 onSearchClick = { navController.navigate("bento_archive") },
-                                onSettingsClick = { /* Settings action */ },
+                                onSettingsClick = { navController.navigate("settings") },
                                 onHistoryClick = { historyId -> navController.navigate("history_detail/$historyId") }
                             )
                         }
@@ -135,7 +135,13 @@ class MainActivity : ComponentActivity() {
                                 onInicioClick = { navController.navigate("home") },
                                 onModulesClick = { navController.navigate("modules") },
                                 onBackTimelineClick = { navController.navigate("archive_timeline") },
-                                onSettingsClick = { /* Settings action */ }
+                                onSettingsClick = { navController.navigate("settings") }
+                            )
+                        }
+                        composable("settings") {
+                            SettingsScreen(
+                                viewModel = viewModel,
+                                onBackClick = { navController.popBackStack() }
                             )
                         }
                     }

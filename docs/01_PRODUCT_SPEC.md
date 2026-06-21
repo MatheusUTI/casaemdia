@@ -1,46 +1,122 @@
-# 01_PRODUCT_SPEC.md — Especificação do Produto
+# 01_PRODUCT_SPEC.md — Especificação de Alinhamento do Produto e Escopo
 
-Este documento descreve as metas de produto, escopo, regras de negócio gerais e limitações acordadas para o aplicativo **Casa em Dia**.
-
----
-
-## 1. Objetivo do App
-O **Casa em Dia** destina-se a organizar e gerenciar manutenções preventivas, prazos de vencimento legais e tarefas programadas de ativos caros ao usuário: sua **residência** (Casa) e/ou **veículo** (Carro), prevenindo prejuízos financeiros por perda de prazos (multas, danos hidráulicos, perda de garantia).
+Este documento centraliza as metas de produto, escopo autorizado do MVP, fronteiras de desenvolvimento, regras lógicas e limitações do aplicativo **Casa em Dia**. Ele atua como a única fonte da verdade (Single Source of Truth) para o escopo e regras de negócio do produto.
 
 ---
 
-## 2. Público-Alvo
-*   Proprietários de imóveis ou inquilinos que gerenciam tarefas domésticas periódicas (e.g. limpar caixa d'água, dedetização, renovação de seguro residencial).
-*   Proprietários de veículos de uso cotidiano que monitoram revisões preventivas (e.g. troca de óleo, troca de pneus, licenciamento anual do veículo).
+## 1. Identidade e Propósito do Produto
+
+O **Casa em Dia** destina-se a organizar e gerenciar manutenções preventivas, prazos de vencimento legais e tarefas programadas de ativos de alto valor sentimental ou financeiro: a **residência** (Casa) e o **veículo** (Carro).
+
+*   **Proposta de Valor:** *"Nunca mais esqueça o que dá prejuízo."*
+*   **Meta Central:** Prevenir perdas financeiras por atraso (multas, infrações, invalidação de garantias, danos hidráulicos, perda de seguro etc.).
+*   **Abordagem Técnica:** *Local-First* completo (dados salvos estritamente na sandbox do usuário) sem conexão de APIs de nuvem obrigatórias ou autenticação de servidores externos.
 
 ---
 
-## 3. Fluxos Principais do App
-1.  **Dashboard de Início (Home):** Linha do tempo dinâmica agrupada por gravidade cronológica:
-    *   *Atrasados:* Lembretes cuja data limite foi ultrapassada.
-    *   *Hoje:* Lembretes que vencem no dia de hoje.
-    *   *Futuros:* Lembretes dos próximos 7 dias e próximos 30 dias.
-2.  **Módulos (Seções):** Acesso rápido e segmentado aos ativos de veículo e residência.
-3.  **Criação/Edição de Lembrete:** Interface intuitiva contendo título, categoria (Carro/Casa), data limite, recorrência (Nenhuma, Mensal, Trimestral, Semestral, Anual) e alerta antecipado (Hoje, 1 dia, 3 dias, 1 semana, 1 mês antes).
-4.  **Conclusão de Lembrete:** Marca o item atual como concluído, registra uma entrada correspondente no histórico (para controle estatístico e logs de auditoria), e se o item for recorrente, agenda automaticamente o próximo ciclo.
-5.  **Histórico e Arquivo:** Exibe o registro histórico detalhado de todas as tarefas concluídas. Fornece recursos para restaurar (desfazer conclusão) e excluir definitivamente.
+## 2. Escopo do MVP Autorizado
+
+O MVP compreende os seguintes módulos e funcionalidades:
+
+*   **Módulo Carro:** Detalhes de odômetro, pendências e histórico específico do veículo.
+*   **Módulo Casa:** Lembretes de caixa d’água, filtros, reformas e afins.
+*   **Arquivo Vivo:** Organização e consulta de anotações (chaves e códigos), notas rápidas e referências locais a documentos.
+*   **Linha do Tempo de Alertas (Home):** Painel que organiza tarefas por gravidade cronológica (*Atrasados*, *Hoje*, *Futuros / Próximos 7 dias / Próximos 30 dias*).
+*   **Histórico de Manutenção:** Registro cronológico de tarefas concluídas, permitindo desfazer conclusão (restaurar) e excluir.
+*   **Notificações Locais:** Alertas antecipados com agendamento via `AlarmManager`.
+*   **Backup Geral Local:** Importação e exportação de backups por arquivo JSON (via SAF).
 
 ---
 
-## 4. Regras de Negócio Fundamentais
-*   **Recorrência Real:** Ao concluir um lembrete configurado com recorrência, gera-se uma nova instância ativa sob o mesmo título e tipo, calculando com precisão matemática o novo prazo (e.g. `+1 mês`, `+3 meses`).
-*   **Alerta Antecipado com Notificação Local:** Se configurado "1 dia antes", o aplicativo programa um agendamento no sistema Android (`AlarmManager`) para enviar uma notificação local exatamente no período configurado, otimizando o aviso prévio ao usuário.
-*   **Controle de Vencimento:** Atividades devem mudar dinamicamente de cor (Vermelho = Atrasado, Amarelo = Atenção / Prósperos, Verde = Em dia) com base na data calculada em relação ao relógio local do sistema operacional.
+## 3. O que o App NÃO é (Limitações Cardinais)
+
+Para preservar o design focado no problema original, o app **NÃO** deve conter as seguintes soluções:
+
+*   Planner genérico, organizador diário de hábitos ou aplicativo voltado a TDAH.
+*   Lista avançada de supermercado ou app de controle doméstico de faxina (tarefas diárias repetitivas).
+*   Rede social familiar ou compartilhamento em tempo real multifamiliar.
+*   Notion simplificado com renderização markdown avançada.
+*   Controle financeiro completo ou conciliação bancária de faturamento.
 
 ---
 
-## 5. Limitações de Produto (Fora de Escopo)
-*   **Sem Sincronização em Nuvem:** Todos os dados persistidos residem localmente no sandbox do aplicativo de maneira privada.
-*   **Sem Modo Multi-Usuário:** Não oferece suporte para compartilhamento em rede ou sincronização de contas familiares.
-*   **Sem Inteligência Artificial Integrada:** O aplicativo executa exclusivamente lógicas determinísticas estruturadas locais.
+## 4. Fora de Escopo do MVP (Fases Futuras)
+
+As seguintes mecânicas estão categoricamente proibidas na versão do MVP atual, devendo ser apresentadas apenas através de interfaces pendentes (TODOs/Mock) se muito necessárias:
+
+1.  Autenticação física (Login, Sign-up, email, SSO ou dados de perfis locais).
+2.  Bancos de dados remotos na nuvem e sincronização em segundo plano multi-dispositivo.
+3.  Funcionalidades dirigidas por Inteligência Artificial (ex: leitores OCR de manuais, assistentes de conversação de diagnóstico ou chatbots).
+4.  Integrações com APIs em tempo real governamentais ou comerciais (ex: DETRAN, tabela FIPE, pagamento direto de taxas corporativas).
+5.  Mecânicas de gamificação avançada (avatares mascotes, ranking de usuários, streaks ou pontuações).
+6.  Módulo pet avançado ou módulo kids.
+
+*Se algum desses itens parecer necessário, criar TODO explícito e pedir confirmação antes de implementar.*
 
 ---
 
-## 6. Referência Cruzada de Documentos
-*   Veja regras de nomenclatura de arquivo e arquitetura em [02_ARCHITECTURE.md](02_ARCHITECTURE.md).
-*   Para acompanhar as regras de compatibilidade do projeto, consulte [00_PROJECT_RULES.md](00_PROJECT_RULES.md).
+## 5. Modelos e Convenções de Domínio
+
+### Tipos de Ativo Permitidos inicialmente (`AssetType`)
+
+A categorização física dos Ativos restringe-se aos enums oficiais:
+*   `CAR` (Carro): Foco em veículo, acompanhado por limites reais de odômetros.
+*   `HOME` (Casa): Itens de alvenaria, fiação, encanamento e regras de habitação.
+*   `DOCUMENT` (Documentação): Agrupamento de registros de expiração livre de ativo físico.
+*   `OTHER` (Outro): Ativos ou utilidades de alto valor secundário (ex: equipamentos domésticos caros).
+
+*Nota: PERSON pode existir residualmente como definição futura de domínio, mas nunca como módulo no MVP.*
+
+### Tipos de Item de Controle (`ControlItemType`)
+
+*   `FIXED_DATE`: Data única de expiração legal sem auto-replicação recorrente (ex: IPTU do ano corrente, data limite do IPVA).
+*   `TIME_INTERVAL`: Tarefas recorrentes que ao serem dadas como concluídas criam novas tarefas idênticas projetando o termo correto no futuro (ex: dedetização a cada 6 meses).
+*   `MILEAGE`: Prazos comandados pelo avanço do deslocamento físico de odômetro de veículos (ex: troca de correias e fluidos).
+*   `INFO`: Registro textual estático para consulta sem qualquer fator de vencimento cronológico.
+*   `DOCUMENT`: Associação virtual à indexação de manuais e arquivos locais salvos.
+
+---
+
+## 6. Regras de Negócio e de Status
+
+A lógica do `ControlStatusCalculator` atua como cérebro centralizador destas diretrizes matemáticas:
+
+### Status de Alertas Permitidos:
+
+*   🟢 **`OK` (Em dia):** Atividade com situação operacional regular.
+*   🟡 **`ATTENTION` (Atenção):** Itens com risco iminente posicionados dentro da janela configurada pelo usuário.
+*   🔴 **`OVERDUE` (Atrasado):** Tarefas cujo teto ou data limite foi ultrapassado.
+
+### Critérios de Cálculo de Status:
+
+1.  **Estado `OVERDUE`:**
+    *   Para datas limite: `limitDate` é estritamente anterior à data corrente (`currentDate`).
+    *   Para odômetros: quilometragem atual do ativo (`currentMileage`) é maior ou igual à quilometragem prevista (`predictedMileage`).
+2.  **Estado `ATTENTION`:**
+    *   Para datas limite: data é igual à data corrente, ou a margem positiva restante (`ChronoUnit.DAYS.between(currentDate, limitDate)`) é menor ou igual à janela estipulada em `alertWindowDays` (padrão = 7 dias).
+    *   Para odômetros: diferença positiva de distância restante (`predictedMileage` - `currentMileage`) é menor ou igual ao residual configurado em `alertWindowMileage` (padrão = 1.000 km).
+3.  **Estado `OK`:**
+    *   Quando a tarefa não satisfizer nenhuma das restrições de atraso ou atenção anteriores.
+
+---
+
+## 7. Diretrizes para Dados de Simulação (Dados Demo)
+
+O gerador de preenchimento automático para testes locais e simulações de UI deve usar exclusivamente os seguintes exemplos autorizados (em Português do Brasil):
+
+*   **Palio 1.6 / Hatch:** Veículo de exemplo simulando odômetro de teste.
+*   **Minha Casa / Apartamento:** Ativo imobiliário de exemplo.
+*   **Troca de Óleo / Filtro de Combustível:** Tarefas do veículo por odômetro.
+*   **IPVA / Licenciamento Anual:** Prazos por data fixa.
+*   **Renovação de Seguro da Caixa / Seguro Auto:** Prazos recorrentes.
+*   **Limpeza do Filtro de Água / Caixa d'Água:** Lembretes recorrentes residenciais.
+*   **Garantia da Geladeira:** Documento rápido.
+
+*É expressamente PROIBIDO o uso de dados pessoais reais de usuários ou chaves internas no código de teste ou compilação.*
+
+---
+
+## 8. Referências Cruzadas
+*   Para verificar regras de processo e condutas técnicas, verifique [docs/00_PROJECT_RULES.md](00_PROJECT_RULES.md).
+*   Para arquitetura técnica integrada, consulte [docs/02_ARCHITECTURE.md](02_ARCHITECTURE.md).
+*   Para testabilidade e checklists, verifique [docs/11_TEST_STRATEGY.md](11_TEST_STRATEGY.md) e [docs/10_TEST_CHECKLIST.md](10_TEST_CHECKLIST.md).

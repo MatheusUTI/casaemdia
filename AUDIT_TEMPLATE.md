@@ -77,11 +77,11 @@ Este modelo deve ser preenchido integralmente por engenheiros de qualidade ou au
 
 ## 7. Verificador Geral de Viabilidade de Clientes (Regras de Negócio)
 
-### Violações ao `AI_RULES.md`:
+### Violações ao `docs/00_PROJECT_RULES.md` e `docs/01_PRODUCT_SPEC.md`:
 * **Resultado:** [ ] Nenhuma violação detectada / [ ] Violações encontradas (Descrever itens):
-  * *Violação:* [Descrever o que quebrou as regras do AI_RULES]
+  * *Violação:* [Descrever o que quebrou as regras ou especificações]
 
-### Violações ao `SDD.md` (Integridade de Fluxos):
+### Violações ao `docs/02_ARCHITECTURE.md` (Integridade de Fluxos):
 * **Resultado:** [ ] Nenhuma violação detectada / [ ] Violações encontradas (Descrever itens):
   * *Violação:* [Ex: A camada de UI instanciou diretamente a entidade de Room para popular um texto]
 

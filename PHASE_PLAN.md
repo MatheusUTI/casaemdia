@@ -17,7 +17,7 @@ Este documento mapeia o ciclo de desenvolvimento incremental do projeto **Casa e
 **Status:** Concluído / Estável
 - **Objetivos:**
   - Criação da infraestrutura nativa Android Kotlin + Jetpack Compose.
-  - Implementação completa do arquivo de governança `AI_RULES.md` e regras de conformidade com o produto.
+  - Implementação completa do arquivo de governança `docs/00_PROJECT_RULES.md` e regras de conformidade com o produto.
   - Estrutura inicial de pacotes segregados por camadas (`data`, `domain`, `ui`, `navigation`).
   - Navegação fluida entre telas usando Compose Navigation através de abas na barra inferior (`AppBottomNav` para as rotas Início, Módulos e Arquivo).
   - Desenvolvimento das interfaces Material 3 ricas baseadas no design oficial:
@@ -38,10 +38,11 @@ Este documento mapeia o ciclo de desenvolvimento incremental do projeto **Casa e
 - **Objetivos:**
   - Ativação do Banco de Dados local SQLite via **Room Database**.
   - Criação das tabelas baseadas nas entidades de Room: 
-    - `AssetEntity`
-    - `ControlItemEntity`
-    - `AttachmentEntity`
-    - `HistoryEntryEntity`
+    - `MaintenanceItem` (unifica Ativo e Item de Controle em tabela única e reativa)
+    - `AppCode` (chaves e segurança)
+    - `AppNote` (anotações rápidas)
+    - `DocumentItem` (manuais e documentos)
+    - `HistoryEntryEntity` (histórico físico de auditoria)
   - Implementação dos DAOs e injeção do padrão Repository Pattern.
   - Estruturação dos Mappers (`Entity` ↔ `Domain Model`) que garantem o isolamento da arquitetura contra contaminações de anotações do Room em camadas de lógica.
   - Transição do `MainViewModel` para salvar e consultar itens de controle diretamente na fonte da verdade persistida.

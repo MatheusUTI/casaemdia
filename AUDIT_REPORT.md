@@ -18,7 +18,7 @@ Este relatório documenta as alterações realizadas, verificações efetuadas e
 
 ### Arquivos Modificados:
 * `app/src/main/java/com/example/data/AppDatabase.kt`
-  * Criada a classe `@Entity(tableName = "history_entries") data class HistoryEntryEntity(...)` seguindo as diretrizes do SDD.
+  * Criada a classe `@Entity(tableName = "history_entries") data class HistoryEntryEntity(...)` seguindo as diretrizes do design de arquitetura.
   * Modificada a interface `MaintenanceDao` adicionando as queries reativas e as funções de inserção para o histórico.
   * Adicionada a nova tabela `HistoryEntryEntity` em `@Database` com incremento da versão do banco para `2`.
   * Configurada a reconstrução do banco em `getDatabase` usando `.fallbackToDestructiveMigration()` e `.allowMainThreadQueries()`.
@@ -76,10 +76,10 @@ Sem adições de novas dependências (stack Room mantida em total conformidade).
 
 ## 7. Verificador Geral de Viabilidade de Clientes (Regras de Negócio)
 
-### Violações ao `AI_RULES.md`:
+### Violações ao `docs/00_PROJECT_RULES.md` e `docs/01_PRODUCT_SPEC.md`:
 * **Resultado:** [x] Nenhuma violação detectada
 
-### Violações ao `SDD.md` (Integridade de Fluxos):
+### Violações ao `docs/02_ARCHITECTURE.md` (Integridade de Fluxos):
 * **Resultado:** [x] Nenhuma violação detectada
 
 ### Violações ao `PHASE_PLAN.md` (Adiantamento de Escopo):

@@ -107,6 +107,69 @@ interface MaintenanceDao {
 
     @Delete
     suspend fun deleteHistoryEntry(entry: HistoryEntryEntity)
+
+    // Sync queries for Backup
+    @Query("SELECT * FROM maintenance_items")
+    suspend fun getAllItemsSync(): List<MaintenanceItem>
+
+    @Query("SELECT * FROM app_codes")
+    suspend fun getAllCodesSync(): List<AppCode>
+
+    @Query("SELECT * FROM app_notes")
+    suspend fun getAllNotesSync(): List<AppNote>
+
+    @Query("SELECT * FROM document_items")
+    suspend fun getAllDocumentsSync(): List<DocumentItem>
+
+    @Query("SELECT * FROM history_entries")
+    suspend fun getAllHistoryEntriesSync(): List<HistoryEntryEntity>
+
+    // Delete all methods for Restore
+    @Query("DELETE FROM maintenance_items")
+    suspend fun deleteAllItems()
+
+    @Query("DELETE FROM app_codes")
+    suspend fun deleteAllCodes()
+
+    @Query("DELETE FROM app_notes")
+    suspend fun deleteAllNotes()
+
+    @Query("DELETE FROM document_items")
+    suspend fun deleteAllDocuments()
+
+    @Query("DELETE FROM history_entries")
+    suspend fun deleteAllHistoryEntries()
+
+    @Transaction
+    suspend fun restoreDatabaseTransaction(
+        items: List<MaintenanceItem>,
+        codes: List<AppCode>,
+        notes: List<AppNote>,
+        docs: List<DocumentItem>,
+        history: List<HistoryEntryEntity>
+    ) {
+        deleteAllItems()
+        deleteAllCodes()
+        deleteAllNotes()
+        deleteAllDocuments()
+        deleteAllHistoryEntries()
+
+        for (item in items) {
+            insertItem(item)
+        }
+        for (code in codes) {
+            insertCode(code)
+        }
+        for (note in notes) {
+            insertNote(note)
+        }
+        for (doc in docs) {
+            insertDocument(doc)
+        }
+        for (entry in history) {
+            insertHistoryEntry(entry)
+        }
+    }
 }
 
 @Database(
@@ -187,6 +250,31 @@ class MaintenanceRepository(private val dao: MaintenanceDao) {
         if (entry != null) {
             dao.deleteHistoryEntry(entry)
         }
+    }
+
+    // Backup & Restore Support in Repository
+    suspend fun getAllItemsSync() = dao.getAllItemsSync()
+    suspend fun getAllCodesSync() = dao.getAllCodesSync()
+    suspend fun getAllNotesSync() = dao.getAllNotesSync()
+    suspend fun getAllDocumentsSync() = dao.getAllDocumentsSync()
+    suspend fun getAllHistoryEntriesSync() = dao.getAllHistoryEntriesSync()
+
+    suspend fun deleteAllData() {
+        dao.deleteAllItems()
+        dao.deleteAllCodes()
+        dao.deleteAllNotes()
+        dao.deleteAllDocuments()
+        dao.deleteAllHistoryEntries()
+    }
+
+    suspend fun restoreDatabaseTransaction(
+        items: List<MaintenanceItem>,
+        codes: List<AppCode>,
+        notes: List<AppNote>,
+        docs: List<DocumentItem>,
+        history: List<HistoryEntryEntity>
+    ) {
+        dao.restoreDatabaseTransaction(items, codes, notes, docs, history)
     }
 
     suspend fun completeControlItem(itemId: Int, context: android.content.Context) {

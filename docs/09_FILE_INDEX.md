@@ -11,11 +11,18 @@ Este documento atua como o mapa principal do projeto **Casa em Dia**, listando a
   ├─ MainActivity.kt                          # Ponto de partida, NavHost e configuração de temas
   ├─ data/                                    # Camada de Persistência, Modelagem e Agendamento
   │   ├─ AppDatabase.kt                       # Definição do banco Room, tabelas e mappers associados
+  │   ├─ BackupHelper.kt                      # Lógica de serialização JSON e exportação de backups locais
   │   ├─ NotificationScheduler.kt             # Lógica integrada para alarmes locais
   │   └─ RecurrenceHelper.kt                  # Auxiliar para próximos saltos de recorrência e labels
   └─ ui/                                      # Telas declarativas Compose, ViewModels e Temas
       ├─ HomeScreen.kt                        # Painel principal consolidado por gravidade de prazo
+      ├─ KpiDashboard.kt                      # Dashboard de KPIs no topo da Home (Bento Grid)
       ├─ NewItemScreen.kt                     # Criação e Edição de lembretes ativos
+      ├─ ValidatedTextFields.kt               # Campo OutlinedTextField com validações integradas
+      ├─ FormComponents.kt                    # Componentes reutilizáveis do formulário (Categoria, Lembrete, etc.)
+      ├─ SettingsScreen.kt                    # Painel de controle de backup e restauração local do banco
+      ├─ SettingsBackupCards.kt               # Botões, cartões de feedback e linhas de backup
+      ├─ SettingsBackupDialogs.kt             # Diálogos de confirmação de overwrite de restore
       ├─ ItemDetailScreen.kt                  # Visualização de atributos e ações (editar, concluir, deletar)
       ├─ HistoryDetailScreen.kt               # Detalhes de registros e ação de reativação (restaurar)
       ├─ RecurrenceSelectors.kt               # UI de seleção de recorrência e de alertas antecipados
@@ -50,11 +57,47 @@ Este documento atua como o mapa principal do projeto **Casa em Dia**, listando a
 *   **Quando alterar:** Nova requisição de eventos da interface com persistência.
 *   **Quando evitar:** Edição puramente cosmética ou adição de animações localizadas.
 
+### `KpiDashboard.kt`
+*   **Responsabilidade:** Componente de Dashboard isolado contendo cards de indicadores (Bento Grid) para lembretes ativos, concluídos, atrasados, vencendo hoje e próximos 7 dias.
+*   **Arquivos relacionados:** `HomeScreen.kt`, `MainViewModel.kt`.
+*   **Quando alterar:** Ao precisar modificar a estética, cores, regras de contagem ou inclusão de novos cartões de indicadores de progresso.
+*   **Quando evitar:** Lógicas de agendamento de alarmes locais ou regras diretas do Room.
+
 ### `NewItemScreen.kt`
 *   **Responsabilidade:** Tela única para criar ou atualizar lembretes ativos.
-*   **Arquivos relacionados:** `RecurrenceSelectors.kt`, `MainViewModel.kt`.
-*   **Quando alterar:** Campos extras inseridos na criação de lembretes.
-*   **Quando evitar:** Para ajustar visualizações exclusivas do histórico ou página de início.
+*   **Arquivos relacionados:** `ValidatedTextFields.kt`, `FormComponents.kt`, `RecurrenceSelectors.kt`, `MainViewModel.kt`.
+*   **Quando alterar:** Ao mudar o fluxo de navegação ou os estados da tela de criação.
+*   **Quando evitar:** Para alterar visualizações exclusivas do histórico ou ajustar as validações visuais diretas dos campos.
+
+### `ValidatedTextFields.kt`
+*   **Responsabilidade:** Fornecer o componente `ValidatedTextField` com contagem automática de limites de caracteres e erros de validação visual.
+*   **Arquivos relacionados:** `NewItemScreen.kt`.
+*   **Quando alterar:** Ao alterar estilos, contadores, ou comportamento padrão dos Inputs de formulário.
+
+### `FormComponents.kt`
+*   **Responsabilidade:** Fornecer elementos comuns de formulário como seleção de categorias de chips e o switch do lembrete inteligente.
+*   **Arquivos relacionados:** `NewItemScreen.kt`.
+*   **Quando alterar:** Ao alterar os estilos visuais destes cartões e seletores.
+
+### `SettingsScreen.kt`
+*   **Responsabilidade:** Interface principal das Configurações do app contendo painéis para criação de backups rápidos na sandbox interna e exportação/importação via arquivos JSON (Storage Access Framework).
+*   **Arquivos relacionados:** `BackupHelper.kt`, `MainViewModel.kt`, `MainActivity.kt`, `SettingsBackupCards.kt`, `SettingsBackupDialogs.kt`.
+*   **Quando alterar:** Ao alterar o fluxo de navegação, roteamento de intents ou estados centrais da tela de configurações.
+
+### `SettingsBackupCards.kt`
+*   **Responsabilidade:** Fornecer os cards de introdução, alertas de erro/sucesso rápidos e linhas de listagem para cada arquivo JSON de backup disponível.
+*   **Arquivos relacionados:** `SettingsScreen.kt`.
+*   **Quando alterar:** Ao alterar estilos visuais das listas de backups ou cards de alerta de configurações.
+
+### `SettingsBackupDialogs.kt`
+*   **Responsabilidade:** Diálogo de alerta preventivo para confirmação de overwrite antes de restaurar qualquer backup e sobrescrever a base Room.
+*   **Arquivos relacionados:** `SettingsScreen.kt`.
+*   **Quando alterar:** Para mudar as mensagens de aviso ou regras de interrupção visual de diálogos.
+
+### `BackupHelper.kt`
+*   **Responsabilidade:** Lógica isolada de serialização JSON, carregamento de streams IO, leitura de sandbox interna e inserção/destruição sequencial do banco de dados Room. Exclui a necessidade de acoplamento pesado na ViewModel principal.
+*   **Arquivos relacionados:** `AppDatabase.kt`, `SettingsScreen.kt`.
+*   **Quando alterar:** Ao precisar modificar a semântica/estrutura do arquivo exportado ou adicionar/remover novas tabelas no escopo do backup.
 
 ---
 
@@ -90,6 +133,7 @@ Criar documentação por feature apenas quando a funcionalidade ficar grande o s
 ---
 
 ## 5. Referência Cruzada de Documentos
+*   Consulte as diretrizes e regras do padrão em [AISDD_PROJECT.md](AISDD_PROJECT.md).
 *   Veja o detalhe das metas funcionais do produto em [01_PRODUCT_SPEC.md](01_PRODUCT_SPEC.md).
 *   Consulte os logs de decisões de arquitetura em [06_DECISIONS_LOG.md](06_DECISIONS_LOG.md).
 *   Consulte a estratégia de testes oficial detalhada em [11_TEST_STRATEGY.md](11_TEST_STRATEGY.md).

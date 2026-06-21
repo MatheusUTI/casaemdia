@@ -49,6 +49,25 @@ fun NewItemScreen(
     var recurrence by remember { mutableStateOf("Nenhuma") }
     var alertDaysBefore by remember { mutableStateOf(0) }
 
+    var titleTouched by remember { mutableStateOf(false) }
+
+    val titleMaxChars = 50
+    val notesMaxChars = 200
+
+    val isTitleTooLong = title.length > titleMaxChars
+    val isTitleError = (titleTouched && title.isBlank()) || isTitleTooLong
+    val titleErrorText = when {
+        isTitleTooLong -> "Título não pode exceder $titleMaxChars caracteres"
+        titleTouched && title.isBlank() -> "O título é obrigatório"
+        else -> null
+    }
+
+    val isNotesTooLong = notes.length > notesMaxChars
+    val isNotesError = isNotesTooLong
+    val notesErrorText = if (isNotesTooLong) "Descrição não pode exceder $notesMaxChars caracteres" else null
+
+    val isSaveEnabled = title.isNotBlank() && !isTitleTooLong && !isNotesTooLong
+
     LaunchedEffect(itemToEdit) {
         if (itemToEdit != null) {
             title = itemToEdit.title
@@ -118,60 +137,29 @@ fun NewItemScreen(
         ) {
             Column {
                 // Topic input field
-                OutlinedTextField(
+                ValidatedTextField(
                     value = title,
-                    onValueChange = { title = it },
-                    placeholder = { Text("O que precisa ser feito?") },
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .testTag("new_item_title_field"),
-                    shape = RoundedCornerShape(12.dp),
-                    colors = OutlinedTextFieldDefaults.colors(
-                        focusedBorderColor = Primary,
-                        unfocusedBorderColor = OutlineVariant
-                    ),
+                    onValueChange = { 
+                        title = it
+                        titleTouched = true
+                    },
+                    placeholderText = "O que precisa ser feito?",
+                    testTag = "new_item_title_field",
+                    maxLength = titleMaxChars,
+                    isError = isTitleError,
+                    errorText = titleErrorText,
+                    charCounterTag = "title_char_counter",
+                    errorTextTag = "title_error_text",
+                    optionalText = "Obrigatório",
                     maxLines = 2
                 )
 
                 Spacer(modifier = Modifier.height(24.dp))
 
-                // CATEGORIA Title
-                Text(
-                    text = "CATEGORIA",
-                    style = MaterialTheme.typography.labelLarge.copy(fontWeight = FontWeight.Bold, color = OnSurfaceVariant)
+                CategorySelectorSection(
+                    category = category,
+                    onCategorySelected = { category = it }
                 )
-
-                Spacer(modifier = Modifier.height(10.dp))
-
-                // Selector tabs row
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(12.dp)
-                ) {
-                    CategorySelectChip(
-                        modifier = Modifier.weight(1f),
-                        label = "Carro",
-                        isSelected = category == "CARRO",
-                        icon = Icons.Default.DirectionsCar,
-                        onClick = { category = "CARRO" }
-                    )
-
-                    CategorySelectChip(
-                        modifier = Modifier.weight(1f),
-                        label = "Casa",
-                        isSelected = category == "CASA",
-                        icon = Icons.Default.Home,
-                        onClick = { category = "CASA" }
-                    )
-
-                    CategorySelectChip(
-                        modifier = Modifier.weight(1f),
-                        label = "Outro",
-                        isSelected = category == "OUTRO",
-                        icon = Icons.Default.MoreHoriz,
-                        onClick = { category = "OUTRO" }
-                    )
-                }
 
                 Spacer(modifier = Modifier.height(28.dp))
 
@@ -183,17 +171,19 @@ fun NewItemScreen(
 
                 Spacer(modifier = Modifier.height(8.dp))
 
-                OutlinedTextField(
+                // Notes / Description field
+                ValidatedTextField(
                     value = notes,
                     onValueChange = { notes = it },
-                    placeholder = { Text("Digite notas adicionais, marcas, prazos ou códigos...") },
-                    modifier = Modifier.fillMaxWidth(),
-                    shape = RoundedCornerShape(12.dp),
-                    minLines = 3,
-                    colors = OutlinedTextFieldDefaults.colors(
-                        focusedBorderColor = Primary,
-                        unfocusedBorderColor = OutlineVariant
-                    )
+                    placeholderText = "Digite notas adicionais, marcas, prazos ou códigos...",
+                    testTag = "new_item_notes_field",
+                    maxLength = notesMaxChars,
+                    isError = isNotesError,
+                    errorText = notesErrorText,
+                    charCounterTag = "notes_char_counter",
+                    errorTextTag = "notes_error_text",
+                    optionalText = "Opcional",
+                    minLines = 3
                 )
 
                 Spacer(modifier = Modifier.height(24.dp))
@@ -204,39 +194,10 @@ fun NewItemScreen(
                 } else {
                     "Opcional (hoje por padrão)"
                 }
-                Card(
-                     modifier = Modifier
-                         .fillMaxWidth()
-                         .clickable { showDatePicker = true }
-                         .testTag("select_date_card"),
-                     shape = RoundedCornerShape(12.dp),
-                     colors = CardDefaults.cardColors(containerColor = SurfaceContainerLowest),
-                     border = BorderStroke(1.dp, OutlineVariant.copy(alpha = 0.4f))
-                ) {
-                    Row(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(16.dp),
-                        horizontalArrangement = Arrangement.SpaceBetween,
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        Row(verticalAlignment = Alignment.CenterVertically) {
-                            Icon(Icons.Default.CalendarToday, contentDescription = "Date", tint = Primary)
-                            Spacer(modifier = Modifier.width(12.dp))
-                            Column {
-                                Text(
-                                    "Selecionar data",
-                                    style = MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.Bold, color = Primary)
-                                )
-                                Text(
-                                    dateText,
-                                    style = MaterialTheme.typography.bodySmall.copy(color = Outline)
-                                )
-                            }
-                        }
-                        Icon(Icons.Default.ChevronRight, contentDescription = "Selecionar", tint = Outline)
-                    }
-                }
+                DatePickerCard(
+                    dateText = dateText,
+                    onClick = { showDatePicker = true }
+                )
 
                 Spacer(modifier = Modifier.height(16.dp))
 
@@ -256,44 +217,10 @@ fun NewItemScreen(
 
                 Spacer(modifier = Modifier.height(16.dp))
 
-                // Intelligent reminder
-                Card(
-                    modifier = Modifier.fillMaxWidth(),
-                    shape = RoundedCornerShape(12.dp),
-                    colors = CardDefaults.cardColors(containerColor = SurfaceContainerLowest),
-                    border = BorderStroke(1.dp, OutlineVariant.copy(alpha = 0.4f))
-                ) {
-                    Row(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(16.dp),
-                        horizontalArrangement = Arrangement.SpaceBetween,
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        Row(verticalAlignment = Alignment.CenterVertically) {
-                            Icon(Icons.Default.NotificationsActive, contentDescription = "Reminder", tint = Color(0xFFD97706))
-                            Spacer(modifier = Modifier.width(12.dp))
-                            Column {
-                                Text(
-                                    "Lembrete Inteligente",
-                                    style = MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.Bold, color = Primary)
-                                )
-                                Text(
-                                    "Aviso 2 dias antes por notificação",
-                                    style = MaterialTheme.typography.bodySmall.copy(color = Outline)
-                                )
-                            }
-                        }
-                        Switch(
-                            checked = smartReminder,
-                            onCheckedChange = { smartReminder = it },
-                            colors = SwitchDefaults.colors(
-                                checkedThumbColor = Color.White,
-                                checkedTrackColor = Primary
-                            )
-                        )
-                    }
-                }
+                IntelligentReminderSection(
+                    smartReminder = smartReminder,
+                    onCheckedChange = { smartReminder = it }
+                )
             }
 
             Spacer(modifier = Modifier.height(40.dp))
@@ -301,7 +228,7 @@ fun NewItemScreen(
             // Save Button
             Button(
                 onClick = {
-                    if (title.isNotBlank()) {
+                    if (isSaveEnabled) {
                         val days = if (selectedDate != null) {
                             ChronoUnit.DAYS.between(LocalDate.now(), selectedDate).toInt()
                         } else {
@@ -340,9 +267,13 @@ fun NewItemScreen(
                     .fillMaxWidth()
                     .height(56.dp)
                     .testTag("save_item_button"),
-                colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF002244)),
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = Color(0xFF002244),
+                    disabledContainerColor = Color(0xFF002244).copy(alpha = 0.4f),
+                    disabledContentColor = Color.White.copy(alpha = 0.6f)
+                ),
                 shape = RoundedCornerShape(28.dp),
-                enabled = title.isNotBlank()
+                enabled = isSaveEnabled
             ) {
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     Icon(Icons.Default.CheckCircle, contentDescription = "Check", tint = Color.White)

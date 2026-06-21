@@ -34,6 +34,7 @@ fun HomeScreen(
     onItemClick: (Int) -> Unit
 ) {
     val items by viewModel.items.collectAsState()
+    val completedHistory by viewModel.historyEntries.collectAsState()
 
     // Filters and groupings
     val overdue = items.filter { !it.isCompleted && it.daysLeft < 0 }
@@ -127,78 +128,99 @@ fun HomeScreen(
                 .verticalScroll(rememberScrollState())
                 .padding(horizontal = 20.dp, vertical = 8.dp)
         ) {
-            // Overdue Section ("Atrasados" - Red)
-            if (overdue.isNotEmpty()) {
-                SectionHeader(title = "Atrasados", icon = Icons.Default.Warning, iconColor = Error)
-                overdue.forEach { item ->
-                    OverdueTaskCard(
-                        item = item,
-                        onClick = {
-                            onItemClick(item.id)
-                        },
-                        onResolve = { viewModel.completeItem(item.id) }
-                    )
-                    Spacer(modifier = Modifier.height(12.dp))
-                }
-            }
+            KpiDashboard(
+                activeCount = items.filter { !it.isCompleted }.size,
+                completedCount = completedHistory.size,
+                overdueCount = overdue.size,
+                todayCount = today.size,
+                next7DaysCount = next7Days.size
+            )
 
-            // Today Section ("Hoje" - Yellow/Orange)
-            SectionHeader(title = "Hoje", icon = Icons.Default.CalendarToday, iconColor = Color(0xFFD97706))
-            if (today.isEmpty()) {
-                TaskEmptyCard("Nenhum compromisso para hoje!")
-            } else {
-                today.forEach { item ->
-                    StandardTaskCard(
-                        item = item,
-                        accentColor = Color(0xFFFEF3C7),
-                        tagColor = Color(0xFFD97706),
-                        onClick = {
-                            onItemClick(item.id)
-                        }
-                    )
-                    Spacer(modifier = Modifier.height(12.dp))
-                }
-            }
-            Spacer(modifier = Modifier.height(16.dp))
+            Spacer(modifier = Modifier.height(8.dp))
 
-            // Next 7 Days Section ("Próximos 7 dias" - Green)
-            SectionHeader(title = "Próximos 7 dias", icon = Icons.Default.DateRange, iconColor = Secondary)
-            if (next7Days.isEmpty()) {
-                TaskEmptyCard("Nenhuma tarefa para os próximos 7 dias.")
+            val activeItems = items.filter { !it.isCompleted }
+            if (activeItems.isEmpty()) {
+                Spacer(modifier = Modifier.height(16.dp))
+                FriendlyEmptyState(
+                    testTag = "home_empty_state",
+                    title = "Sua residência e veículo estão 100% em dia!",
+                    description = "Excelente trabalho! Você não possui nenhuma pendência de verificação ativa, atrasada ou com vencimento para os próximos 30 dias. Toque no botão '+' abaixo a qualquer instante para catalogar uma nova manutenção preventiva.",
+                    illustration = { HomeEmptyIllustration() }
+                )
             } else {
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(16.dp)
-                ) {
-                    next7Days.forEach { item ->
-                        Box(modifier = Modifier.weight(1f)) {
-                            GridTaskCard(
-                                item = item,
-                                onClick = {
-                                    onItemClick(item.id)
-                                }
-                            )
+                // Overdue Section ("Atrasados" - Red)
+                if (overdue.isNotEmpty()) {
+                    SectionHeader(title = "Atrasados", icon = Icons.Default.Warning, iconColor = Error)
+                    overdue.forEach { item ->
+                        OverdueTaskCard(
+                            item = item,
+                            onClick = {
+                                onItemClick(item.id)
+                            },
+                            onResolve = { viewModel.completeItem(item.id) }
+                        )
+                        Spacer(modifier = Modifier.height(12.dp))
+                    }
+                }
+
+                // Today Section ("Hoje" - Yellow/Orange)
+                SectionHeader(title = "Hoje", icon = Icons.Default.CalendarToday, iconColor = Color(0xFFD97706))
+                if (today.isEmpty()) {
+                    TaskEmptyCard("Nenhum compromisso para hoje!")
+                } else {
+                    today.forEach { item ->
+                        StandardTaskCard(
+                            item = item,
+                            accentColor = Color(0xFFFEF3C7),
+                            tagColor = Color(0xFFD97706),
+                            onClick = {
+                                onItemClick(item.id)
+                            }
+                        )
+                        Spacer(modifier = Modifier.height(12.dp))
+                    }
+                }
+                Spacer(modifier = Modifier.height(16.dp))
+
+                // Next 7 Days Section ("Próximos 7 dias" - Green)
+                SectionHeader(title = "Próximos 7 dias", icon = Icons.Default.DateRange, iconColor = Secondary)
+                if (next7Days.isEmpty()) {
+                    TaskEmptyCard("Nenhuma tarefa para os próximos 7 dias.")
+                } else {
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(16.dp)
+                    ) {
+                        next7Days.forEach { item ->
+                            Box(modifier = Modifier.weight(1f)) {
+                                GridTaskCard(
+                                    item = item,
+                                    onClick = {
+                                        onItemClick(item.id)
+                                    }
+                                )
+                            }
                         }
                     }
                 }
-            }
-            Spacer(modifier = Modifier.height(24.dp))
+                Spacer(modifier = Modifier.height(24.dp))
 
-            // Next 30 Days Section ("Próximos 30 dias" - Slate)
-            SectionHeader(title = "Próximos 30 dias", icon = Icons.Default.EventNote, iconColor = Outline)
-            if (next30Days.isEmpty()) {
-                TaskEmptyCard("Tudo limpo para os próximos 30 dias!")
-            } else {
-                next30Days.forEach { item ->
-                    StandardTaskCard(
-                        item = item,
-                        accentColor = SurfaceContainerLow,
-                        tagColor = Primary,
-                        onClick = {
-                            onItemClick(item.id)
-                        }
-                    )
-                    Spacer(modifier = Modifier.height(12.dp))
+                // Next 30 Days Section ("Próximos 30 dias" - Slate)
+                SectionHeader(title = "Próximos 30 dias", icon = Icons.Default.EventNote, iconColor = Outline)
+                if (next30Days.isEmpty()) {
+                    TaskEmptyCard("Tudo limpo para os próximos 30 dias!")
+                } else {
+                    next30Days.forEach { item ->
+                        StandardTaskCard(
+                            item = item,
+                            accentColor = SurfaceContainerLow,
+                            tagColor = Primary,
+                            onClick = {
+                                onItemClick(item.id)
+                            }
+                        )
+                        Spacer(modifier = Modifier.height(12.dp))
+                    }
                 }
             }
 

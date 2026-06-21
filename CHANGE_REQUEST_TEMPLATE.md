@@ -69,8 +69,8 @@ Para prosseguir, o arquiteto executor deve responder ao checklist abaixo, justif
 
 | Critério de Verificação | Análise / Justificativa | Conformidade? (OK) |
 |---|---|---|
-| **1. Viola o `AI_RULES.md`?** | [Descreva brevemente] | **[ ] SIM / [ ] NÃO** |
-| **2. Viola diretrizes do `SDD.md`?** | [Descreva brevemente] | **[ ] SIM / [ ] NÃO** |
+| **1. Viola `docs/00_PROJECT_RULES.md` / `01_PRODUCT_SPEC.md`?** | [Descreva brevemente] | **[ ] SIM / [ ] NÃO** |
+| **2. Viola diretrizes de `docs/02_ARCHITECTURE.md`?** | [Descreva brevemente] | **[ ] SIM / [ ] NÃO** |
 | **3. Pertence à fase ativa do `PHASE_PLAN.md`?** | [Descreva brevemente] | **[ ] SIM / [ ] NÃO** |
 | **4. Adiciona dependência externa nova?** | [Descreva brevemente] | **[ ] SIM / [ ] NÃO** |
 | **5. Cria lógicas ou código morto no applet?** | [Descreva brevemente] | **[ ] SIM / [ ] NÃO** |
@@ -80,7 +80,7 @@ Para prosseguir, o arquiteto executor deve responder ao checklist abaixo, justif
 | **9. Gera fragilidade na navegação estrutural?** | [Descreva brevemente] | **[ ] SIM / [ ] NÃO** |
 | **10. Contorna o `ControlStatusCalculator`?** | [Descreva brevemente] | **[ ] SIM / [ ] NÃO** |
 | **11. Duplica modelos de dados sem mappers?** | [Descreva brevemente] | **[ ] SIM / [ ] NÃO** |
-| **12. Adiciona dados fora das 4 entidades do MVP?** | [Descreva brevemente] | **[ ] SIM / [ ] NÃO** |
+| **12. Adiciona dados fora das 5 tabelas físicas do MVP?** | [Descreva brevemente] | **[ ] SIM / [ ] NÃO** |
 
 > **Atenção:** Em conformidade com o `HARNESS.md`, caso ocorra resposta **"SIM"** para qualquer uma das perguntas acima sem anuência ou justificativa extrema aprovada previamente pelo engenheiro principal, a proposta será rejeitada de forma automática, e a implementação não poderá ser iniciada.
 

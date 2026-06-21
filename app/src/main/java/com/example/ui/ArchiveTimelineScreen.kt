@@ -36,12 +36,24 @@ fun ArchiveTimelineScreen(
 ) {
     val completedHistory by viewModel.historyEntries.collectAsState()
     var selectedFilter by remember { mutableStateOf("Todos") }
+    var searchText by remember { mutableStateOf("") }
+    var selectedSort by remember { mutableStateOf("Mais recentes") }
+    var sortMenuExpanded by remember { mutableStateOf(false) }
 
-    val filteredHistory = when (selectedFilter) {
-        "Casa" -> completedHistory.filter { it.category == "CASA" }
-        "Carro" -> completedHistory.filter { it.category == "CARRO" }
-        "Jardim" -> completedHistory.filter { it.subtitle?.lowercase()?.contains("jardim") == true }
-        else -> completedHistory
+    val filteredHistory = completedHistory.filter {
+        val matchesCategory = when (selectedFilter) {
+            "Casa" -> it.category == "CASA"
+            "Carro" -> it.category == "CARRO"
+            else -> true
+        }
+        val matchesSearch = it.title.contains(searchText, ignoreCase = true)
+        matchesCategory && matchesSearch
+    }
+
+    val sortedHistory = when (selectedSort) {
+        "Mais antigos" -> filteredHistory.sortedBy { it.id }
+        "Ordem alfabética" -> filteredHistory.sortedBy { it.title.lowercase() }
+        else -> filteredHistory.sortedByDescending { it.id }
     }
 
     Scaffold(
@@ -130,16 +142,44 @@ fun ArchiveTimelineScreen(
                 }
             }
 
-            Spacer(modifier = Modifier.height(16.dp))
+            Spacer(modifier = Modifier.height(12.dp))
 
-            // Filter chips horizontal scroll row
+            // Real-time title search box
+            OutlinedTextField(
+                value = searchText,
+                onValueChange = { searchText = it },
+                placeholder = { Text("Pesquisar histórico...") },
+                leadingIcon = { Icon(Icons.Default.Search, contentDescription = "Buscar", tint = Outline) },
+                trailingIcon = {
+                    if (searchText.isNotEmpty()) {
+                        IconButton(onClick = { searchText = "" }) {
+                            Icon(Icons.Default.Clear, contentDescription = "Limpar", tint = Outline)
+                        }
+                    }
+                },
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .testTag("history_search_input"),
+                shape = RoundedCornerShape(24.dp),
+                colors = OutlinedTextFieldDefaults.colors(
+                    focusedBorderColor = Primary,
+                    unfocusedBorderColor = OutlineVariant.copy(alpha = 0.5f),
+                    focusedContainerColor = SurfaceContainerLowest,
+                    unfocusedContainerColor = SurfaceContainerLowest
+                ),
+                singleLine = true
+            )
+
+            Spacer(modifier = Modifier.height(12.dp))
+
+            // Category filter chips row with explicit options ("Todos", "Casa", "Carro")
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
                     .horizontalScroll(rememberScrollState()),
                 horizontalArrangement = Arrangement.spacedBy(10.dp)
             ) {
-                listOf("Todos", "Casa", "Carro", "Jardim").forEach { filter ->
+                listOf("Todos", "Casa", "Carro").forEach { filter ->
                     val isSelected = selectedFilter == filter
                     Box(
                         modifier = Modifier
@@ -152,6 +192,7 @@ fun ArchiveTimelineScreen(
                             )
                             .clickable { selectedFilter = filter }
                             .padding(horizontal = 18.dp, vertical = 8.dp)
+                            .testTag("filter_chip_$filter")
                     ) {
                         Text(
                             text = filter,
@@ -164,21 +205,85 @@ fun ArchiveTimelineScreen(
                 }
             }
 
-            Spacer(modifier = Modifier.height(24.dp))
+            Spacer(modifier = Modifier.height(16.dp))
+
+            // Total Completed counter and Sorting Selector Row
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .testTag("completed_total_counter_row"),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                // Total completed counter
+                Text(
+                    text = "${completedHistory.size} concluídas no total",
+                    style = MaterialTheme.typography.bodyMedium.copy(
+                        fontWeight = FontWeight.Bold,
+                        color = Secondary
+                    ),
+                    modifier = Modifier.testTag("completed_total_counter")
+                )
+
+                // Sorting drop-down selector
+                Box {
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        modifier = Modifier
+                            .clip(RoundedCornerShape(8.dp))
+                            .background(SurfaceContainerLow)
+                            .clickable { sortMenuExpanded = true }
+                            .padding(horizontal = 12.dp, vertical = 6.dp)
+                            .testTag("sort_selector")
+                    ) {
+                        Icon(Icons.Default.Sort, contentDescription = "Ordenação", tint = Primary, modifier = Modifier.size(18.dp))
+                        Spacer(modifier = Modifier.width(6.dp))
+                        Text(
+                            text = selectedSort,
+                            style = MaterialTheme.typography.labelMedium.copy(fontWeight = FontWeight.Bold, color = Primary)
+                        )
+                        Icon(
+                            imageVector = if (sortMenuExpanded) Icons.Default.ArrowDropUp else Icons.Default.ArrowDropDown,
+                            contentDescription = "Expandir",
+                            tint = Primary,
+                            modifier = Modifier.size(18.dp)
+                        )
+                    }
+
+                    DropdownMenu(
+                        expanded = sortMenuExpanded,
+                        onDismissRequest = { sortMenuExpanded = false }
+                    ) {
+                        listOf("Mais recentes", "Mais antigos", "Ordem alfabética").forEach { option ->
+                            DropdownMenuItem(
+                                text = { Text(option) },
+                                onClick = {
+                                    selectedSort = option
+                                    sortMenuExpanded = false
+                                },
+                                modifier = Modifier.testTag("sort_option_$option")
+                            )
+                        }
+                    }
+                }
+            }
+
+            Spacer(modifier = Modifier.height(16.dp))
 
             // Timeline container list
-            if (filteredHistory.isEmpty()) {
+            if (sortedHistory.isEmpty()) {
                 Box(
                     modifier = Modifier
                         .weight(1f)
                         .fillMaxWidth(),
                     contentAlignment = Alignment.Center
                 ) {
-                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                        Icon(Icons.Default.History, contentDescription = "Histórico Vazio", modifier = Modifier.size(48.dp), tint = Outline)
-                        Spacer(modifier = Modifier.height(8.dp))
-                        Text("Histórico está limpo!", style = MaterialTheme.typography.bodyLarge.copy(color = Outline))
-                    }
+                    FriendlyEmptyState(
+                        testTag = "history_empty_state",
+                        title = "Histórico Limpo e Organizado",
+                        description = "Aqui serão listados todos os seus históricos de tarefas executadas com custos e observações. No momento, nenhum registro foi localizado para os filtros ou busca informados.",
+                        illustration = { HistoryEmptyIllustration() }
+                    )
                 }
             } else {
                 Box(modifier = Modifier.weight(1f)) {
@@ -196,7 +301,7 @@ fun ArchiveTimelineScreen(
                             .fillMaxSize()
                             .verticalScroll(rememberScrollState())
                     ) {
-                        filteredHistory.forEach { item ->
+                        sortedHistory.forEach { item ->
                             Row(
                                 modifier = Modifier
                                     .fillMaxWidth()

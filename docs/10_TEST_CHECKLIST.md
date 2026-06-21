@@ -8,7 +8,7 @@ Guia simplificado para verificação funcional rotineira, contendo ações prát
 
 | Ação | Resultado Esperado |
 | :--- | :--- |
-| **Digitar nome vazio e salvar na criação** | O botão de salvar permanece desabilitado, ou exibe Toast instruindo a preencher o título obrigatoriamente. |
+| **Digitar nome vazio, longo ou notas longas e salvar** | Campo de título exibe mensagem de erro se vazio/superior a 50 chars. Campo de descrição (notas) exibe erro se superior a 200 chars. Contadores são atualizados dinamicamente. O botão de salvar permanece desabilitado se houver erros de validação. |
 | **Marcar lembrete ativo como completo** | O item desaparece do painel inicial ativamente, gera um Toast de confirmação visual, e uma nova entrada correspondente aparece no Histórico de forma íntegra. |
 | **Concluir item configurado como Trimestral** | O item atual é arquivado, e um novo lembrete clonado idêntico com data limite de exata proximidade futura para `+3 meses` é criado em segundo plano de forma instantânea. |
 | **Excluir atividade concluída do histórico** | Registro histórico é deletado definitivamente sem afetar outras instâncias ativas ou bancos concorrentes. |

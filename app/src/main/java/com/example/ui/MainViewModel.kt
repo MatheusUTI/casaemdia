@@ -47,7 +47,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         }
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
 
-    // Direct domain model exposure for strict SDD alignment
+    // Direct domain model exposure for strict AISDD alignment
     val controlItems: StateFlow<List<ControlItem>> = repository.allItems
         .map { list -> list.map { ModelMapper.toDomain(it) } }
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
@@ -186,6 +186,59 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     fun addDocument(fileName: String, fileSize: String, fileType: String) {
         viewModelScope.launch {
             repository.insertDocument(DocumentItem(fileName = fileName, fileSize = fileSize, fileType = fileType))
+        }
+    }
+
+    // Backup & Restore Support in ViewModel
+    fun backupToLocalAppFolder(onSuccess: (java.io.File) -> Unit, onError: () -> Unit) {
+        viewModelScope.launch {
+            val file = com.example.data.BackupHelper.exportToLocalAppFolder(getApplication(), repository)
+            if (file != null) {
+                onSuccess(file)
+            } else {
+                onError()
+            }
+        }
+    }
+
+    fun restoreFromLocalFile(file: java.io.File, onSuccess: () -> Unit, onError: (String) -> Unit) {
+        viewModelScope.launch {
+            try {
+                val success = com.example.data.BackupHelper.restoreFromLocalFile(repository, file)
+                if (success) {
+                    onSuccess()
+                } else {
+                    onError("Erro ao restaurar do arquivo de backup.")
+                }
+            } catch (e: Exception) {
+                onError(e.message ?: "Erro crítico ao restaurar do backup rápido.")
+            }
+        }
+    }
+
+    fun restoreFromStream(inputStream: java.io.InputStream, onSuccess: () -> Unit, onError: (String) -> Unit) {
+        viewModelScope.launch {
+            try {
+                val success = com.example.data.BackupHelper.restoreFromStream(repository, inputStream)
+                if (success) {
+                    onSuccess()
+                } else {
+                    onError("Erro ao carregar o fluxo de dados do backup.")
+                }
+            } catch (e: Exception) {
+                onError(e.message ?: "Erro ao processar conteúdo do arquivo importado.")
+            }
+        }
+    }
+
+    fun exportToStream(outputStream: java.io.OutputStream, onSuccess: () -> Unit, onError: () -> Unit) {
+        viewModelScope.launch {
+            val success = com.example.data.BackupHelper.writeBackupToStream(repository, outputStream)
+            if (success) {
+                onSuccess()
+            } else {
+                onError()
+            }
         }
     }
 }

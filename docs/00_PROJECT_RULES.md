@@ -1,5 +1,8 @@
 # 00_PROJECT_RULES.md — Regras de Projeto e Invariantes
 
+> [!IMPORTANT]
+> **Ponto de Entrada Recomendado / Início de Sessão:** Sempre comece lendo e carregando todo o contexto consolidado em **[START_HERE.md](START_HERE.md)**.
+
 Este documento descreve as invariantes absolutas, regras de desenvolvimento permanentes, convenções e regras do projeto **Casa em Dia**.
 
 ---
@@ -84,9 +87,34 @@ Não refatorar agressivamente só por número de linhas. Se a extração aumenta
 
 ---
 
-## 4. Formato de Resposta do Agente Requerido
+## 4. Regras Anti-Alucinação e Restrições de Escopo
 
-Toda e qualquer entrega futura realizada pela IA deve seguir obrigatoriamente a estrutura descrita abaixo:
+Como agente de IA, você deve respeitar rigorosamente as seguintes condutas de engenharia e regras de escopo:
+
+1.  **Sem Recursos Adjacentes:** Não inventar nem introduzir funcionalidades fora do escopo do planejado.
+2.  **Uso Limitado de Dependências:** Não adicionar bibliotecas ou frameworks externos sem aprovação ou justificativa explícita no log de decisões.
+3.  **Local-First Íntegro:** Não adicionar logins, armazenamento na nuvem, serviços de IA online, servidores remotos ou compartilhamentos multiusuário.
+4.  **Preservação Arquitetural:** Não alterar o fluxo ou as responsabilidades de classe sem fundamentar o motivo.
+5.  **Sem Regressões Críticas:** Jamais remover código ou restringir funcionalidades que já estejam completamente ativas e testadas no MVP.
+6.  **Minimalismo nas Alterações:** Modificar unicamente os arquivos sob impacto direto da tarefa confiada. Evitar refatorações gerais estéticas de classes estáveis colaterais.
+7.  **Conformidade de Linguagem:** Toda a interface de usuário finalizada deve ser estritamente em **Português do Brasil (pt-BR)**. Nomes internos de variáveis e classes podem ser formulados em inglês técnico.
+8.  **TODOs em Falhas de Contexto:** Caso necessite de informações complementares, configure TODOs específicos em vez de alucinar ou adivinhar a implementação.
+
+### Regra do Desenvolvimento Incremental e Autorizações:
+
+*   **Lógicas Autorizadas e Já Estabilizadas:**
+    *   **Room Database Reativo:** Integrado com mappers imutáveis de domínio.
+    *   **Lembretes e Eventos Locais:** Agendados com sucesso via `AlarmManager`.
+    *   **Backup Sandbox Local:** Exportação/Importação via arquivos JSON físicos.
+*   **Lógicas Proibidas no MVP (Fases Futuras):**
+    *   Sistemas de cobrança e parcerias comerciais (*Billing*).
+    *   Sincronização remota global centralizada (*Cloud Sync*).
+
+---
+
+## 5. Formato de Resposta do Agente Requerido
+
+Toda e qualquer entrega técnica finalizada neste repositório por agentes de IA deve utilizar a seguinte estrutura rígida:
 
 ### Structure Schema
 
@@ -123,8 +151,9 @@ Toda e qualquer entrega futura realizada pela IA deve seguir obrigatoriamente a 
 
 ---
 
-## 5. Referência Cruzada de Documentos
-*   Para regras específicas do produto, veja [01_PRODUCT_SPEC.md](01_PRODUCT_SPEC.md).
-*   Para diagrama de arquitetura técnica, veja [02_ARCHITECTURE.md](02_ARCHITECTURE.md).
+## 6. Referência Cruzada de Documentos
+*   Para orientação geral de início de sessão de IA, acesse **[START_HERE.md](START_HERE.md)**.
+*   Para regras específicas de escopo e status do produto, veja [01_PRODUCT_SPEC.md](01_PRODUCT_SPEC.md).
+*   Para o diagrama e fluxograma de arquitetura técnica, veja [02_ARCHITECTURE.md](02_ARCHITECTURE.md).
 *   Para o estado atual funcional de entregas, consulte [03_CURRENT_STATE.md](03_CURRENT_STATE.md).
 *   Para entender a pirâmide e os padrões de teste, consulte [11_TEST_STRATEGY.md](11_TEST_STRATEGY.md).
